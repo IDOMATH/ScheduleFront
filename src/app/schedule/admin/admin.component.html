@@ -1,0 +1,250 @@
+<div class="admin-container">
+  <header class="admin-header">
+    <h1>Event Management</h1>
+    <div class="header-actions">
+      <button (click)="logout()" class="logout-btn">Logout</button>
+      <button (click)="goToSchedule()" class="schedule-btn">View Schedule</button>
+    </div>
+  </header>
+
+  <div class="admin-content">
+    <div class="section">
+      <h2>Create New Event</h2>
+      <div class="form-group">
+        <label for="selectTeam">Team *</label>
+        <select
+          id="selectTeam"
+          class="form-control"
+          [ngModel]="selectedTeamId()"
+          (ngModelChange)="onTeamChange($event)"
+          name="teamId"
+          required
+        >
+          <option *ngFor="let team of teams()" [value]="team.id">
+            {{ team.organizationName }} — {{ team.name }}
+          </option>
+        </select>
+      </div>
+      <form (ngSubmit)="onCreateSubmit()" #createForm="ngForm" class="event-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="createTitle">Title *</label>
+            <input
+              type="text"
+              id="createTitle"
+              name="title"
+              [(ngModel)]="newEvent().title"
+              required
+              #title="ngModel"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="createDate">Date *</label>
+            <input
+              type="date"
+              id="createDate"
+              name="date"
+              [(ngModel)]="newEvent().date"
+              required
+              #date="ngModel"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="createStartTime">Start Time *</label>
+            <input
+              type="time"
+              id="createStartTime"
+              name="startTime"
+              [(ngModel)]="newEvent().startTime"
+              required
+              #startTime="ngModel"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="createEndTime">End Time</label>
+            <input
+              type="time"
+              id="createEndTime"
+              name="endTime"
+              [(ngModel)]="newEvent().endTime"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="createLocation">Location</label>
+          <input
+            type="text"
+            id="createLocation"
+            name="location"
+            [(ngModel)]="newEvent().location"
+            class="form-control"
+          />
+        </div>
+
+        <button type="submit" [disabled]="createForm.invalid || createLoading()" class="create-btn">
+          <span *ngIf="createLoading()">Creating...</span>
+          <span *ngIf="!createLoading()">Create Event</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>Existing Events</h2>
+
+      <div *ngIf="allEvents.length === 0" class="empty-state">
+        <p>No events found yet. Create one to get started.</p>
+      </div>
+
+      <div *ngIf="upcomingEvents.length > 0" class="event-section">
+        <h3>Upcoming Events</h3>
+        <div class="events-grid">
+          <div *ngFor="let event of upcomingEvents" class="event-card">
+            <div class="event-header">
+              <h3>{{ event.title }}</h3>
+              <div class="event-actions">
+                <button (click)="startEdit(event)" class="edit-btn">Edit</button>
+                <button
+                  (click)="deleteEvent(event.id)"
+                  class="delete-btn"
+                  [disabled]="deleteLoading() === event.id"
+                >
+                  <span *ngIf="deleteLoading() === event.id">Deleting...</span>
+                  <span *ngIf="deleteLoading() !== event.id">Delete</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="event-details">
+              <p><strong>Date:</strong> {{ event.startDateTime | date: 'mediumDate' }}</p>
+              <p>
+                <strong>Time:</strong> {{ event.startDateTime | date: 'shortTime'
+                }}{{ event.endDateTime ? ' - ' + (event.endDateTime | date: 'shortTime') : '' }}
+              </p>
+              <p *ngIf="event.location"><strong>Location:</strong> {{ event.location }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="pastEvents.length > 0" class="event-section past-events">
+        <h3>Past Events</h3>
+        <div class="events-grid">
+          <div *ngFor="let event of pastEvents" class="event-card">
+            <div class="event-header">
+              <h3>{{ event.title }}</h3>
+              <div class="event-actions">
+                <button (click)="startEdit(event)" class="edit-btn">Edit</button>
+                <button
+                  (click)="deleteEvent(event.id)"
+                  class="delete-btn"
+                  [disabled]="deleteLoading() === event.id"
+                >
+                  <span *ngIf="deleteLoading() === event.id">Deleting...</span>
+                  <span *ngIf="deleteLoading() !== event.id">Delete</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="event-details">
+              <p><strong>Date:</strong> {{ event.startDateTime | date: 'mediumDate' }}</p>
+              <p>
+                <strong>Time:</strong> {{ event.startDateTime | date: 'shortTime'
+                }}{{ event.endDateTime ? ' - ' + (event.endDateTime | date: 'shortTime') : '' }}
+              </p>
+              <p *ngIf="event.location"><strong>Location:</strong> {{ event.location }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div *ngIf="editingEvent()" class="modal-overlay" (click)="cancelEdit()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h2>Edit Event</h2>
+
+        <form (ngSubmit)="onEditSubmit()" #editForm="ngForm" class="event-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editTitle">Title *</label>
+              <input
+                type="text"
+                id="editTitle"
+                name="title"
+                [(ngModel)]="editingEvent()!.title"
+                required
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="editDate">Date *</label>
+              <input
+                type="date"
+                id="editDate"
+                name="date"
+                [(ngModel)]="editingEvent()!.date"
+                required
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editStartTime">Start Time *</label>
+              <input
+                type="time"
+                id="editStartTime"
+                name="startTime"
+                [(ngModel)]="editingEvent()!.startTime"
+                required
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="editEndTime">End Time</label>
+              <input
+                type="time"
+                id="editEndTime"
+                name="endTime"
+                [(ngModel)]="editingEvent()!.endTime"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editLocation">Location</label>
+            <input
+              type="text"
+              id="editLocation"
+              name="location"
+              [(ngModel)]="editingEvent()!.location"
+              class="form-control"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+            <button type="submit" [disabled]="editForm.invalid || editLoading()" class="save-btn">
+              <span *ngIf="editLoading()">Saving...</span>
+              <span *ngIf="!editLoading()">Save Changes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

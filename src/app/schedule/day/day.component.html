@@ -1,0 +1,18 @@
+<div class="day">
+  <div class="day-header">
+    <div class="day-name">{{ date() | date: 'EEE' }}</div>
+    <div class="day-date">{{ date() | date: 'MMM d' }}</div>
+  </div>
+  <ul class="events">
+    @for (event of events(); track event.id) {
+      <li>
+        <div class="event-time">{{ event.startDateTime | date: 'shortTime' }}</div>
+        <div class="event-title">{{ event.title }}</div>
+      </li>
+    } @empty {
+      <li>
+        <span class="no-event">No events</span>
+      </li>
+    }
+  </ul>
+</div>

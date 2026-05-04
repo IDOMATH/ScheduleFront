@@ -1,0 +1,126 @@
+<section class="schedule">
+  <header class="schedule-header">
+    <div class="header-left">
+      <button type="button" (click)="previousWeek()" aria-label="Previous week">◀ Previous</button>
+    </div>
+
+    <div class="header-center">
+      <div class="week-title">{{ weekTitle() }}</div>
+      
+      <div class="selectors">
+        <div class="schedule-selector" *ngIf="organizations().length > 0">
+          <label for="org-select">Organization:</label>
+          <select
+            id="org-select"
+            [ngModel]="selectedOrgId()"
+            (ngModelChange)="onOrgChange($event)"
+            class="schedule-select"
+          >
+            <option *ngFor="let org of organizations()" [value]="org.id">
+              {{ org.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="schedule-selector" *ngIf="teams().length > 0">
+          <label for="team-select">Team:</label>
+          <select
+            id="team-select"
+            [ngModel]="selectedTeamId()"
+            (ngModelChange)="onTeamChange($event)"
+            class="schedule-select"
+          >
+            <option [value]="null">All Teams</option>
+            <option *ngFor="let team of teams()" [value]="team.id">
+              {{ team.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button type="button" (click)="nextWeek()" aria-label="Next week">Next ▶</button>
+
+      @if (isAdmin()) {
+        <div class="admin-controls">
+          <button type="button" (click)="goToAdmin()" class="admin-btn" aria-label="Admin panel">
+            Admin
+          </button>
+          <button type="button" (click)="logout()" class="logout-btn" aria-label="Logout">
+            Logout
+          </button>
+        </div>
+      } @else {
+        <button type="button" (click)="goToAdmin()" class="login-btn" aria-label="Login">
+          Login
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">Loading events...</div>
+  }
+
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+
+  @if (!isLoading()) {
+    <div class="week-grid">
+      @for (day of weekDates(); track day.getTime()) {
+        <app-day [date]="day" [events]="getEventsForDay(day)"> </app-day>
+      }
+    </div>
+  }
+
+  <!-- Weekly digest subscription strip -->
+  <div class="subscribe-strip">
+    <div class="subscribe-inner">
+      <div class="subscribe-copy">
+        <span class="subscribe-icon">📬</span>
+        <span class="subscribe-label">Get this week's schedule in your inbox every Sunday.</span>
+      </div>
+
+      @if (subscribeStatus() === 'success') {
+        <div class="subscribe-feedback subscribe-feedback--success">
+          ✅ You're subscribed! Check your inbox on Sunday evenings.
+        </div>
+      } @else if (subscribeStatus() === 'duplicate') {
+        <div class="subscribe-feedback subscribe-feedback--info">
+          ℹ️ That email is already subscribed.
+        </div>
+      } @else {
+        <form class="subscribe-form" (ngSubmit)="subscribe()" id="subscribe-form">
+          <input
+            id="subscribe-email"
+            type="email"
+            class="subscribe-input"
+            placeholder="your@email.com"
+            [ngModel]="subscribeEmail()"
+            (ngModelChange)="subscribeEmail.set($event)"
+            name="email"
+            required
+            aria-label="Email address"
+          />
+          <button
+            id="subscribe-btn"
+            type="submit"
+            class="subscribe-btn"
+            [disabled]="subscribeStatus() === 'loading'"
+            aria-label="Subscribe to weekly digest"
+          >
+            {{ subscribeStatus() === 'loading' ? 'Subscribing…' : 'Subscribe' }}
+          </button>
+        </form>
+
+        @if (subscribeStatus() === 'error') {
+          <div class="subscribe-feedback subscribe-feedback--error">
+            ⚠️ {{ subscribeError() }}
+          </div>
+        }
+      }
+    </div>
+  </div>
+</section>
