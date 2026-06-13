@@ -1,0 +1,178 @@
+.season-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.62);
+  padding: 2rem;
+}
+
+.season-dialog {
+  width: min(1440px, 100%);
+  overflow: auto;
+  border-radius: 10px;
+  background: #f8fafc;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.35);
+}
+
+.season-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 1rem 1.25rem;
+}
+
+.season-eyebrow {
+  color: #718096;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.season-header h2 {
+  margin: 0.15rem 0 0;
+  color: #1a202c;
+  font-size: 1.45rem;
+}
+
+.season-close {
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2d3748;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+}
+
+.season-close:hover {
+  background: #edf2f7;
+}
+
+.season-summary {
+  padding: 0.85rem 1.25rem 0;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.season-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.season-month {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.season-month h3 {
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 0.9rem;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.season-weekdays,
+.season-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.season-weekdays {
+  border-bottom: 1px solid #e2e8f0;
+  background: #f7fafc;
+  color: #718096;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.season-weekdays span {
+  padding: 0.45rem 0.25rem;
+}
+
+.season-day {
+  min-height: 118px;
+  border-right: 1px solid #edf2f7;
+  border-bottom: 1px solid #edf2f7;
+  padding: 0.45rem;
+  background: #ffffff;
+}
+
+.season-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.season-day--muted {
+  background: #f8fafc;
+  color: #a0aec0;
+}
+
+.season-day-number {
+  margin-bottom: 0.35rem;
+  color: #4a5568;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.season-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.season-event {
+  display: grid;
+  gap: 0.1rem;
+  border-left: 3px solid #4fa3f7;
+  border-radius: 3px;
+  background: #ebf8ff;
+  padding: 0.3rem 0.35rem;
+}
+
+.season-event-time {
+  color: #2b6cb0;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.season-event-title {
+  color: #1a202c;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+@media (max-width: 600px) {
+  .season-overlay {
+    padding: 0.75rem;
+  }
+
+  .season-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .season-months {
+    grid-template-columns: 1fr;
+    padding: 0.75rem;
+  }
+
+  .season-day {
+    min-height: 96px;
+    padding: 0.35rem;
+  }
+}

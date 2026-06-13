@@ -22,20 +22,6 @@
           </select>
         </div>
 
-        <div class="schedule-selector" *ngIf="teams().length > 0">
-          <label for="team-select">Team:</label>
-          <select
-            id="team-select"
-            [ngModel]="selectedTeamId()"
-            (ngModelChange)="onTeamChange($event)"
-            class="schedule-select"
-          >
-            <option [value]="null">All Teams</option>
-            <option *ngFor="let team of teams()" [value]="team.id">
-              {{ team.name }}
-            </option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -59,68 +45,98 @@
     </div>
   </header>
 
-  @if (isLoading()) {
-    <div class="loading">Loading events...</div>
-  }
+  <div class="schedule-body">
+    <div class="calendar-column">
+      @if (isLoading()) {
+        <div class="loading">Loading events...</div>
+      }
 
-  @if (error()) {
-    <div class="error">{{ error() }}</div>
-  }
+      @if (error()) {
+        <div class="error">{{ error() }}</div>
+      }
 
-  @if (!isLoading()) {
-    <div class="week-grid">
-      @for (day of weekDates(); track day.getTime()) {
-        <app-day [date]="day" [events]="getEventsForDay(day)"> </app-day>
+      @if (!isLoading()) {
+        <div class="team-calendars">
+          @for (team of teams(); track team.id) {
+            <section class="team-calendar">
+              <button
+                type="button"
+                class="team-title-button"
+                (click)="openSeasonCalendar(team)"
+                [attr.aria-label]="'Open full season calendar for ' + team.name"
+              >
+                <span class="team-title">{{ team.name }}</span>
+                <span class="team-title-action">Full season</span>
+              </button>
+              <div class="week-grid">
+                @for (day of weekDates(); track day.getTime()) {
+                  <app-day [date]="day" [events]="getEventsForTeamDay(team.id, day)"> </app-day>
+                }
+              </div>
+            </section>
+          } @empty {
+            <div class="empty-state">No teams found.</div>
+          }
+        </div>
       }
     </div>
-  }
 
-  <!-- Weekly digest subscription strip -->
-  <div class="subscribe-strip">
-    <div class="subscribe-inner">
-      <div class="subscribe-copy">
-        <span class="subscribe-icon">📬</span>
-        <span class="subscribe-label">Get this week's schedule in your inbox every Sunday.</span>
-      </div>
-
-      @if (subscribeStatus() === 'success') {
-        <div class="subscribe-feedback subscribe-feedback--success">
-          ✅ You're subscribed! Check your inbox on Sunday evenings.
+    <!-- Weekly digest subscription rail -->
+    <aside class="subscribe-strip">
+      <div class="subscribe-inner">
+        <div class="subscribe-copy">
+          <span class="subscribe-icon">📬</span>
+          <span class="subscribe-label">Get this week's schedule in your inbox every Sunday.</span>
         </div>
-      } @else if (subscribeStatus() === 'duplicate') {
-        <div class="subscribe-feedback subscribe-feedback--info">
-          ℹ️ That email is already subscribed.
-        </div>
-      } @else {
-        <form class="subscribe-form" (ngSubmit)="subscribe()" id="subscribe-form">
-          <input
-            id="subscribe-email"
-            type="email"
-            class="subscribe-input"
-            placeholder="your@email.com"
-            [ngModel]="subscribeEmail()"
-            (ngModelChange)="subscribeEmail.set($event)"
-            name="email"
-            required
-            aria-label="Email address"
-          />
-          <button
-            id="subscribe-btn"
-            type="submit"
-            class="subscribe-btn"
-            [disabled]="subscribeStatus() === 'loading'"
-            aria-label="Subscribe to weekly digest"
-          >
-            {{ subscribeStatus() === 'loading' ? 'Subscribing…' : 'Subscribe' }}
-          </button>
-        </form>
 
-        @if (subscribeStatus() === 'error') {
-          <div class="subscribe-feedback subscribe-feedback--error">
-            ⚠️ {{ subscribeError() }}
+        @if (subscribeStatus() === 'success') {
+          <div class="subscribe-feedback subscribe-feedback--success">
+            ✅ You're subscribed! Check your inbox on Sunday evenings.
           </div>
+        } @else if (subscribeStatus() === 'duplicate') {
+          <div class="subscribe-feedback subscribe-feedback--info">
+            ℹ️ That email is already subscribed.
+          </div>
+        } @else {
+          <form class="subscribe-form" (ngSubmit)="subscribe()" id="subscribe-form">
+            <input
+              id="subscribe-email"
+              type="email"
+              class="subscribe-input"
+              placeholder="your@email.com"
+              [ngModel]="subscribeEmail()"
+              (ngModelChange)="subscribeEmail.set($event)"
+              name="email"
+              required
+              aria-label="Email address"
+            />
+            <button
+              id="subscribe-btn"
+              type="submit"
+              class="subscribe-btn"
+              [disabled]="subscribeStatus() === 'loading'"
+              aria-label="Subscribe to weekly digest"
+            >
+              {{ subscribeStatus() === 'loading' ? 'Subscribing…' : 'Subscribe' }}
+            </button>
+          </form>
+
+          @if (subscribeStatus() === 'error') {
+            <div class="subscribe-feedback subscribe-feedback--error">
+              ⚠️ {{ subscribeError() }}
+            </div>
+          }
         }
-      }
-    </div>
+      </div>
+    </aside>
   </div>
+
+  @if (selectedSeasonTeam(); as team) {
+    <app-season-calendar
+      [team]="team"
+      [events]="allOrganizationEvents()"
+      [fallbackMonth]="currentSunday()"
+      (close)="closeSeasonCalendar()"
+    />
+  }
 </section>

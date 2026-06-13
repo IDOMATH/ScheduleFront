@@ -15,18 +15,19 @@ import { DateUtilsService } from '../services/date-utils.service';
 import { AuthService } from '../services/auth.service';
 import { SubscriberService } from '../services/subscriber.service';
 import { DayComponent } from '../day/day.component';
+import { SeasonCalendarComponent } from '../season-calendar/season-calendar.component';
 
 @Component({
   selector: 'week-schedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, DayComponent],
+  imports: [CommonModule, FormsModule, DayComponent, SeasonCalendarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './week-schedule.component.html',
   styleUrl: './week-schedule.component.css',
 })
 export class WeekScheduleComponent implements OnInit, OnDestroy {
   // State signals
-  private currentSunday = signal<Date>(null!);
+  currentSunday = signal<Date>(null!);
   weekDates = computed(() => {
     const dates: Date[] = [];
     const sunday = this.currentSunday();
@@ -41,9 +42,11 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
   selectedOrgId = signal<string | null>(null);
 
   teams = signal<Team[]>([]);
-  selectedTeamId = signal<string | null>(null);
 
+  allOrganizationEvents = signal<EventItem[]>([]);
   eventsByDate = signal<Record<string, EventItem[]>>({});
+  eventsByTeamDate = signal<Record<string, Record<string, EventItem[]>>>({});
+  selectedSeasonTeam = signal<Team | null>(null);
   isLoading = signal(false);
   error = signal<string | null>(null);
 
@@ -71,8 +74,8 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadOrganizations();
     this.currentSunday.set(this.dateUtils.startOfWeek(new Date()));
+    this.loadOrganizations();
   }
 
   ngOnDestroy(): void {}
@@ -80,6 +83,11 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
   getEventsForDay(date: Date): EventItem[] {
     const isoDate = this.dateUtils.toIsoDate(date);
     return this.eventsByDate()[isoDate] ?? [];
+  }
+
+  getEventsForTeamDay(teamId: string, date: Date): EventItem[] {
+    const isoDate = this.dateUtils.toIsoDate(date);
+    return this.eventsByTeamDate()[teamId]?.[isoDate] ?? [];
   }
 
   previousWeek(): void {
@@ -102,6 +110,14 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  openSeasonCalendar(team: Team): void {
+    this.selectedSeasonTeam.set(team);
+  }
+
+  closeSeasonCalendar(): void {
+    this.selectedSeasonTeam.set(null);
   }
 
   // ---- Subscription ----
@@ -135,21 +151,12 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.error.set(null);
 
-    const isoDate = this.dateUtils.toIsoDate(sunday);
-    const teamId = this.selectedTeamId();
     const orgId = this.selectedOrgId();
 
-    if (teamId) {
-      // Fetch for specific team
-      this.svc.getEventsForWeek(isoDate, teamId).subscribe({
-        next: (items) => this.groupEvents(items),
-        error: this.handleLoadError.bind(this)
-      });
-    } else if (orgId) {
-      // Fetch for organization, manually filter to this week
+    if (orgId) {
       this.svc.getEventsByOrganization(orgId).subscribe({
         next: (items) => {
-          // Filter to only events in this week
+          this.allOrganizationEvents.set(items);
           const endOfWeek = this.dateUtils.addDays(sunday, 7);
           const filtered = items.filter(item => {
             const date = new Date(item.startDateTime);
@@ -161,7 +168,9 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
       });
     } else {
       // No organization selected
+      this.allOrganizationEvents.set([]);
       this.eventsByDate.set({});
+      this.eventsByTeamDate.set({});
       this.isLoading.set(false);
     }
   }
@@ -174,11 +183,20 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
 
   private groupEvents(items: EventItem[]): void {
     const grouped: Record<string, EventItem[]> = {};
+    const groupedByTeam: Record<string, Record<string, EventItem[]>> = {};
+
     items.forEach((item) => {
       const dateKey = new Date(item.startDateTime).toISOString().split('T')[0];
       (grouped[dateKey] ??= []).push(item);
+
+      if (item.teamId) {
+        const teamEvents = (groupedByTeam[item.teamId] ??= {});
+        (teamEvents[dateKey] ??= []).push(item);
+      }
     });
+
     this.eventsByDate.set(grouped);
+    this.eventsByTeamDate.set(groupedByTeam);
     this.isLoading.set(false);
   }
 
@@ -203,8 +221,6 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
     this.svc.getTeamsByOrganization(orgId).subscribe({
       next: (teams) => {
         this.teams.set(teams);
-        // Do not auto-select a team, default to entire org
-        this.selectedTeamId.set(null); 
         this.loadWeek(this.currentSunday());
       },
       error: (err) => console.error('Failed to load teams:', err)
@@ -213,11 +229,7 @@ export class WeekScheduleComponent implements OnInit, OnDestroy {
 
   onOrgChange(orgId: string): void {
     this.selectedOrgId.set(orgId);
+    this.closeSeasonCalendar();
     this.loadTeamsForOrganization(orgId);
-  }
-
-  onTeamChange(teamId: string | null): void {
-    this.selectedTeamId.set(teamId == 'null' ? null : teamId);
-    this.loadWeek(this.currentSunday());
   }
 }

@@ -1,0 +1,49 @@
+<div class="season-overlay" role="dialog" aria-modal="true" [attr.aria-label]="team().name + ' season calendar'">
+  <div class="season-dialog">
+    <header class="season-header">
+      <div>
+        <div class="season-eyebrow">Season calendar</div>
+        <h2>{{ team().name }}</h2>
+      </div>
+      <button type="button" class="season-close" (click)="close.emit()" aria-label="Close season calendar">
+        Close
+      </button>
+    </header>
+
+    <div class="season-summary">
+      {{ teamEvents().length }} scheduled {{ teamEvents().length === 1 ? 'event' : 'events' }}
+    </div>
+
+    <div class="season-months">
+      @for (month of seasonMonths(); track month.getTime()) {
+        <section class="season-month">
+          <h3>{{ month | date: 'MMMM yyyy' }}</h3>
+          <div class="season-weekdays" aria-hidden="true">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+          <div class="season-month-grid">
+            @for (day of getSeasonMonthDays(month); track day.getTime()) {
+              <div class="season-day" [class.season-day--muted]="!isCurrentMonth(day, month)">
+                <div class="season-day-number">{{ day | date: 'd' }}</div>
+                <div class="season-day-events">
+                  @for (event of getEventsForDay(day); track event.id) {
+                    <div class="season-event">
+                      <span class="season-event-time">{{ event.startDateTime | date: 'shortTime' }}</span>
+                      <span class="season-event-title">{{ event.title }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+</div>

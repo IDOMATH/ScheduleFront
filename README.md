@@ -1,59 +1,76 @@
-# Front
+# ScheduleFront
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.6.
+Angular frontend for the SeasonSchedule app. It provides the public schedule view, admin login flow, event management screens, weekly digest signup, and expanded team season calendars.
 
-## Development server
+This project is intended to sit next to the backend repository:
+
+```text
+vibe/
+├── SeasonSchedule/
+└── ScheduleFront/
+```
+
+The backend repository's `docker-compose.yml` builds this project as the `frontend` service.
+
+## Features
+
+- Organization selector for schedule viewing
+- One weekly calendar row per team by default
+- Clickable team headers that open a larger season calendar
+- Weekly digest signup side rail
+- Admin login and event management flows
+- nginx production container with same-origin API proxying
+
+## Local Development
 
 To start a local development server, run:
 
 ```bash
-ng serve
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Then open http://localhost:4200.
 
-## Code scaffolding
+By default, the development environment calls the backend at `http://localhost:8080/api`, so run the backend separately if you need live API data.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Docker / Compose
+
+From the sibling backend repository:
 
 ```bash
-ng generate component component-name
+cd ../SeasonSchedule
+docker compose up --build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+The production Angular build uses `apiUrl: '/api'`, and this project's nginx config proxies `/api/`, `/health`, and `/openapi.yaml` to the Compose backend service at `http://backend:8080`.
+
+## Build
+
+To build the project:
 
 ```bash
-ng generate --help
+npm run build
 ```
 
-## Building
+Build artifacts are written to `dist/front`.
 
-To build the project run:
+## Tests
 
 ```bash
-ng build
+npm test -- --watch=false
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Useful Commands
 
 ```bash
-ng test
+npm start
+npm run build
+npm test -- --watch=false
 ```
 
-## Running end-to-end tests
+## Project Notes
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Angular version: 21.x
+- Test runner: Vitest via Angular CLI
+- Production server: nginx
+- Backend API source: `../SeasonSchedule`
