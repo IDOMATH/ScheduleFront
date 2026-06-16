@@ -6,7 +6,7 @@
 
     <div class="header-center">
       <div class="week-title">{{ weekTitle() }}</div>
-      
+
       <div class="selectors">
         <div class="schedule-selector" *ngIf="organizations().length > 0">
           <label for="org-select">Organization:</label>
@@ -21,7 +21,6 @@
             </option>
           </select>
         </div>
-
       </div>
     </div>
 
@@ -75,7 +74,7 @@
               </div>
             </section>
           } @empty {
-            <div class="empty-state">No teams found.</div>
+            <div class="empty-state">No teams found</div>
           }
         </div>
       }
